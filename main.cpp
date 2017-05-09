@@ -152,66 +152,52 @@ string intToFileName(string fileNameFormat, int fileNumber) {
 
 string wormSegmenter(const char *fname) {
 
-    //fstream outputFile;
-
-    //outputFile.open(cla.output.c_str(), ios::out);
-
     int x = -1, y = -1, area = -1;
     int adjustX = 0, adjustY = 0;
 
-    // Iterate over all the images.
-    //for (int fileNumber = 0; fileNumber < cla.frames; fileNumber ++) {
 
-        // File name of each file including the path.
-        //string fileName = cla.input + intToFileName("0000000", fileNumber) + cla.extension;
-        
-        string fileName = cla.input + fname;
+    // File name of each file including the path.
+    string fileName = cla.input + fname;
 
-        // Read and convert the image into gray scale and copy into the matrix.
-        Mat src = imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
+    // Read and convert the image into gray scale and copy into the matrix.
+    Mat src = imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
 
-        // Exit.
-        if (!src.data) {
-            cout << endl << "Exited." << endl;
-            exit(1);
-        }
+    // Exit.
+    if (!src.data) {
+        cout << endl << "Exited." << endl;
+        exit(1);
+    }
 
-        if((x == -1) && (y == -1)) {
-            findCentroidFromImage(src, &x, &y, &area);
-            src = imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
+    if((x == -1) && (y == -1)) {
+        findCentroidFromImage(src, &x, &y, &area);
+        src = imread(fileName, CV_LOAD_IMAGE_GRAYSCALE);
+        adjustX = x - (cla.search_win_size / 2);
+        adjustY = y - (cla.search_win_size / 2);
+    }
+    else{
+        src = src(Rect(x - (cla.search_win_size / 2), y - (cla.search_win_size / 2), cla.search_win_size, cla.search_win_size));
+
+        findCentroidFromImage(src, &x, &y, &area);
+
+        if((x > 0) && (y > 0)) {
+            x += adjustX;
+            y += adjustY;
             adjustX = x - (cla.search_win_size / 2);
             adjustY = y - (cla.search_win_size / 2);
         }
-        else {
-            src = src(Rect(x - (cla.search_win_size / 2), y - (cla.search_win_size / 2), cla.search_win_size, cla.search_win_size));
+    }
 
-            findCentroidFromImage(src, &x, &y, &area);
-
-            if((x > 0) && (y > 0)) {
-                x += adjustX;
-                y += adjustY;
-                adjustX = x - (cla.search_win_size / 2);
-                adjustY = y - (cla.search_win_size / 2);
-            }
-        }
-
-        //outputFile << fileNumber << ", " << x << ", " << y << ", " << area << endl;
-        //printf("%s\t%s\t%d\t%d\t%d\n", cla.input.c_str(), fname, x, y, area);
+    //printf("%s\t%s\t%d\t%d\t%d\n", cla.input.c_str(), fname, x, y, area);
         
-        //std::stringstream out;
-        //out << fname << " " << x << " " << y << " " << area;
-        string temp = fname;
-        std::string output = temp + " " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(area);
+    //std::stringstream out;
+    //out << fname << " " << x << " " << y << " " << area;
+    string temp = fname;
+    std::string output = temp + " " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(area);
         
-    //}
-
-    //outputFile.close();
-
     return output;
 }
 
-
-
+/* Function to get the centroid in the image */
 int findCentroidFromImage(Mat src, int *pX, int *pY, int *pArea) {
     // Smoothing the image.
     blur(src, src, Size(cla.blur_radius, cla.blur_radius));     //Blur radius 3 in original java worm segmenter.
@@ -259,32 +245,36 @@ int findCentroidFromImage(Mat src, int *pX, int *pY, int *pArea) {
     return 0;
 }
 
+/* JNI method for the java wrapper class */
 JNIEXPORT jstring JNICALL Java_Test_run(JNIEnv *env, jobject obj, jstring path, jstring fname){
     jboolean iscopy;
     const char *file_path;
     const char *file_name;
     string res;
-
+    
+    //copying the arguments passed from the java method call
     file_path = (env)->GetStringUTFChars(path, &iscopy);
     file_name = (env)->GetStringUTFChars(fname, &iscopy);
     
     //providing input directory path
     cla.input = file_path;
-
-    //try{
+    
+    try{
         res = wormSegmenter(file_name);
-    /*}
+    }
     catch(int e){
         printf("Exception occured: %d\n", e);
-    }*/
+    }
 
     return (env)->NewStringUTF(res.c_str());
 }
 
 int main(int argc, char **argv) {
-    const char *argp_program_version = "Worm Segmenter 1.0.0";
-    const char *argp_program_bug_address = "<adityashirodkar@yahoo.com>";
+    const char *argp_program_version = "Worm Segmenter JNI 1.0.0";
+    const char *argp_program_bug_address = "<zkhavas@hawk.iit.edu>";
+
     /*
+    * Deprecated lines of code, not required when using as JNI library
     struct argp_option options[] = {
         {"project",               'P', "NAME",       0,                    "The name of the project to process."},
         {"input",                 'i', "PATH",       OPTION_ARG_OPTIONAL,  "Path to input images."},
