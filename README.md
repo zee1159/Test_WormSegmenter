@@ -2,9 +2,9 @@
 Feature extraction from C. elegans observational video. This repository is for building the static library in JNI for the JAVA wrapper class.
 
 ### Files Description
-1. openCV_scripts.sh: Script for installing openCV libraries
-2. main.cpp: C++ file for processing images.
-3. Test.so: Static library generated from the main file.
+1. **openCV_scripts.sh**: Script for installing openCV libraries
+2. **main.cpp**: C++ file for processing images.
+3. **Test.so**: Static library generated from the main file.
 
 ### Generating static library for Worm Segmenter
 
